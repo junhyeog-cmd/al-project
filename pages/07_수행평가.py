@@ -1,21 +1,50 @@
+# requirements.txt
+# ------------------
+# Streamlit & Plotly dependencies
+streamlit
+pandas
+plotly
+
+
+# pages/game_analysis.py
+# -----------------------
+import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
-# 파일 이름
-file_name = "(주)강원랜드_카지노게임현황_20241231.csv"
+# CSV 파일 불러오기 (루트 폴더)
+df = pd.read_csv("./(주)강원랜드_카지노게임현황_20241231.csv", encoding="cp949")
 
-# 데이터프레임 불러오기
-try:
-    df = pd.read_csv(file_name)
-    
-    # 데이터 상위 5개 행 출력
-    print("--- 데이터프레임 상위 5개 행 ---")
-    print(df.head())
-    
-    # 데이터 정보 요약
-    print("\n--- 데이터프레임 정보 요약 ---")
-    print(df.info())
+st.title("강원랜드 카지노 게임 현황 분석")
 
-except FileNotFoundError:
-    print(f"오류: 파일 '{file_name}'을 찾을 수 없습니다. 파일 이름을 확인해주세요.")
-except Exception as e:
-    print(f"데이터를 불러오는 중 오류 발생: {e}")
+st.write("### 원본 데이터")
+st.dataframe(df)
+
+# 게임별 대수 합산
+grouped = df.groupby("게임명", as_index=False)["대수"].sum()
+
+# 1등(대수가 가장 높은 게임) 색 빨간색 처리
+max_value = grouped["대수"].max()
+grouped = grouped.sort_values("대수", ascending=False)
+
+colors = ["red" if v == max_value else "rgba(255,150,150,0.6)" for v in grouped["대수"]]
+
+# Plotly 그래프 생성
+fig = go.Figure()
+fig.add_trace(
+    go.Bar(
+        x=grouped["게임명"],
+        y=grouped["대수"],
+        marker=dict(color=colors)
+    )
+)
+
+fig.update_layout(
+    title="게임별 보유 대수 (1등=빨간색, 나머지=그라데이션)",
+    xaxis_title="게임명",
+    yaxis_title="대수",
+)
+
+st.write("### 게임별 대수 시각화")
+st.plotly_chart(fig)
