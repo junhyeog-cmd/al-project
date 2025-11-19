@@ -81,3 +81,5 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+st.write(df.head())
+st.write(df.columns.tolist())
